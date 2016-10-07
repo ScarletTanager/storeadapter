@@ -116,18 +116,50 @@ func (adapter *ETCDStoreAdapter) etcdErrorCode(err error) int {
 	return 0
 }
 
+func (adapter *ETCDStoreAdapter) etcdErrorMessage(err error) string {
+	if err != nil {
+		switch err.(type) {
+		case etcd.EtcdError:
+			return err.(etcd.EtcdError).Message
+		case *etcd.EtcdError:
+			return err.(*etcd.EtcdError).Message
+		}
+	}
+
+	return ""
+}
+
+func (adapter *ETCDStoreAdapter) etcdErrorCause(err error) string {
+	if err != nil {
+		switch err.(type) {
+		case etcd.EtcdError:
+			return err.(etcd.EtcdError).Cause
+		case *etcd.EtcdError:
+			return err.(*etcd.EtcdError).Cause
+		}
+	}
+
+	return ""
+}
+
 func (adapter *ETCDStoreAdapter) convertError(err error) error {
-	switch adapter.etcdErrorCode(err) {
-	case 501:
-		return storeadapter.ErrorTimeout
-	case 100:
-		return storeadapter.ErrorKeyNotFound
-	case 102:
-		return storeadapter.ErrorNodeIsDirectory
-	case 105:
-		return storeadapter.ErrorKeyExists
-	case 101:
-		return storeadapter.ErrorKeyComparisonFailed
+	// switch adapter.etcdErrorCode(err) {
+	// case 501:
+	// 	return storeadapter.ErrorTimeout
+	// case 100:
+	// 	return storeadapter.ErrorKeyNotFound
+	// case 102:
+	// 	return storeadapter.ErrorNodeIsDirectory
+	// case 105:
+	// 	return storeadapter.ErrorKeyExists
+	// case 101:
+	// 	return storeadapter.ErrorKeyComparisonFailed
+	// }
+	if err != nil {
+		return errors.New(fmt.Sprintf("ETCD Error - Code: %d; Message: %s; Cause: %s",
+			adapter.etcdErrorCode(err),
+			adapter.etcdErrorMessage(err),
+			adapter.etcdErrorCause(err)))
 	}
 
 	return err
